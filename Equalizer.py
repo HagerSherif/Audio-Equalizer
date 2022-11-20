@@ -14,34 +14,20 @@ import altair as alt
 import mpld3
 
 
-#range of frequency domain of letters is (0-4000hz)
+
 st.set_page_config(page_title="Equalizer", page_icon=":headphones:",layout="wide")
 
 if 'uploadedFile' not in st.session_state:
     st.session_state['uploadedFile']=None
-
-if 'modified_wav_file' not in st.session_state:
-    st.session_state['modified_wav_file']=None   
-
-if 'radio_check' not in st.session_state:
+    st.session_state['modified_wav_file']=None  
     st.session_state['radio_check']=0 
-
-if 'modified_data' not in st.session_state:
     st.session_state['modified_data']=None 
-
-if 'fourierValues' not in st.session_state:
     st.session_state['fourierValues']=[]   
-          
-if 'size' not in st.session_state:
     st.session_state['size']=0 
-
-if 'paused' not in st.session_state:
     st.session_state['paused']=False 
-
-if 'play_original' not in st.session_state:
     st.session_state['play_original']=False 
-          
 
+          
 hide_st_style = """
             <style>
             #MainMenu {visibility: hidden;}
@@ -66,7 +52,7 @@ def plot_animation(df):
             x=alt.X("x_axis", axis=alt.Axis(title='Time'),scale=alt.Scale(domain=(0,st.session_state['time'][-1]))),
             y=alt.Y('y_axis', axis=alt.Axis(title='Magnitude')),
         ).properties(
-            width=550,
+            width=1020,
             height=150
         )
     return lines
@@ -134,26 +120,10 @@ def add_new_uploaded_file ():
 
 def change_frequency(sliderNumber,amplituideValue,sliders_number):
     maxFrequency=st.session_state['maxFrequency'] 
-    if sliders_number==10:   
-        maxFrequencyRange=(math.ceil(sliderNumber*maxFrequency/10))
-        minFrequencyRange=maxFrequencyRange-int(maxFrequency/10)
-    elif sliders_number==4: 
-        if sliderNumber==1:
-            minFrequencyRange,maxFrequencyRange=2000,9000   #sh   (show)
-        elif sliderNumber==2:
-            minFrequencyRange,maxFrequencyRange=900,2800   #r     (project)
-        elif sliderNumber==3:
-            minFrequencyRange,maxFrequencyRange=1200,5000   #b    (beautiful)
-        elif sliderNumber==4:
-            minFrequencyRange,maxFrequencyRange=1200,4000  #a     (bad)
-    else: 
-        if sliderNumber==1:
-            minFrequencyRange,maxFrequencyRange=0,1300
-        elif sliderNumber==2:
-            minFrequencyRange,maxFrequencyRange=1300,2000
-        elif sliderNumber==3:
-            minFrequencyRange,maxFrequencyRange=2000,22050    
-            
+    max=new_dict['max']
+    maxFrequencyRange=max[sliderNumber-1]
+    min=new_dict['min']
+    minFrequencyRange=min[sliderNumber-1]            
     pointsPerFrequency=int (len(st.session_state['frequency'])/maxFrequency)
     frequencyRange=[minFrequencyRange*pointsPerFrequency,maxFrequencyRange*pointsPerFrequency]
     dataCopy=st.session_state['mainFourierValues'][frequencyRange[0]:frequencyRange[1]].copy()
@@ -202,17 +172,8 @@ def make_sliders():
             ('slider10',0),]
     
     sliders = {}
-    if radio_check=="Vowels_Frequency":
-        sliders_number=4
-    elif radio_check== "Music_Instruments":
-        sliders_number=3
-    elif radio_check=='Male-Female':
-        maleFemaleChange()
-        sliders_number=0
-    else:
-        sliders_number=10
-    if sliders_number!=0:
-        columns = st.columns(sliders_number,gap='small')
+    sliders_number=new_dict['number_of_sliders']
+    columns = st.columns(sliders_number,gap='small')
 
     for idx in range(sliders_number):
         min_value = 0
@@ -226,25 +187,7 @@ def make_sliders():
                 sliders[key]  = 0
             else:
                 change_frequency(key,sliders[key],sliders_number)
-
-            if radio_check=="Frequency":
-                st.caption(str((key-1)*int((st.session_state['maxFrequency']/10)))+"-"+str(int(key*st.session_state['maxFrequency']/10))+"Hz" )
-            elif radio_check== "Music_Instruments":  
-                if key==1:
-                   st.caption("Drums/Piano")
-                elif key==2:
-                   st.caption("Flute")
-                elif key==3:
-                    st.caption("Cymbal")
-            elif radio_check== "Vowels_Frequency":  
-                if key==1:
-                   st.caption("sh")
-                elif key==2:
-                   st.caption("r")
-                elif key==3:
-                    st.caption("b") 
-                elif key==4:
-                    st.caption("a")            
+            st.caption(new_dict['names_of_sliders'][key-1])
 
 def play_buttons():
         global Apply
@@ -343,10 +286,53 @@ def medical_mode():
         draw_medical_signal(modifiedData,'Modified Signal')    
 
 def main():
-    global file,radio_check,spectroCheckBox
+    global file,radio_check,spectroCheckBox,new_dict
+    arr=["Frequency","Vowels_Frequency","Music_Instruments","Animals"]
+    dict={
+    "Frequency":{
+        "number_of_sliders":10,
+        "names_of_sliders":['1','2','3','4','5','6','7','8','9','10'],
+        "min":[2,4,5,7,3,9,4,6,5,7,5],
+        "max":[3,5,6,8,4,10,5,7,6,8,4]
+    },
+    "Vowels_Frequency":{
+        "number_of_sliders":4,
+        "names_of_sliders":['sh','r','ou','a'],
+        "min":[2000,600,1200,100],
+        "max":[7000,3000,6000,2000]
+    },
+    "Music_Instruments":{
+        "number_of_sliders":3,
+        "names_of_sliders":['Drums/Piano','Flute','Cymbal'],
+        "min":[0,1300,2000],
+        "max":[130,2000,22050]
+    },
+    "Animals":{
+        "number_of_sliders":2,
+        "names_of_sliders":['Dog/Wolf','Bat/Duck'],
+        "min":[170,1300],
+        "max":[1300,7500]
+    }
+    }
+
+
     file= st.sidebar.file_uploader("Upload your file",type={"csv",".wav"}, on_change=add_new_uploaded_file,key='uploadedFileCheck')
     spectroCheckBox=st.sidebar.checkbox('Spectrogram')
-    radio_check= st.sidebar.radio("choose:",("Frequency","Vowels_Frequency","Music_Instruments",'Male-Female'))
+    radio_check= st.sidebar.radio("choose:",options=arr)
+    
+    for i in range(len(arr)):
+        new_dict={}
+        if radio_check=="Frequency":
+            new_dict.update(dict["Frequency"])
+        elif radio_check=="Vowels_Frequency":
+            new_dict.update(dict["Vowels_Frequency"])
+        elif radio_check=="Music_Instruments":
+            new_dict.update(dict["Music_Instruments"])
+        else:
+            new_dict.update(dict["Animals"])   
+
+
+
     if file is not None:
         if file.type =='audio/wav':
             sound_mode()
