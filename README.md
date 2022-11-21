@@ -52,6 +52,7 @@
 
 ### 9. Draw Spectrogram Option
 #### When you choose this option, the spectrogram figures of the input and output signals are shown instead of time domain figures.
+![2022-11-21_232613](https://user-images.githubusercontent.com/87495750/203170221-c9905344-0876-4403-aa55-9326157d15cb.jpg)    
 ![2022-11-21_232629](https://user-images.githubusercontent.com/87495750/203164881-b9ec2043-83e7-4f5f-b4c7-51f9efd68a34.jpg)  
   
 ### 9. Apply button
