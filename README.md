@@ -43,7 +43,6 @@
 #### It works on arrhythmia cases of heart and change their frequencies.  
 ![2022-11-21_232107](https://user-images.githubusercontent.com/87495750/203163796-7acb22df-6960-4bca-93e2-de0a7a6f97af.jpg)
 
-
 ### 7. Dynamic draw of the signal
 #### when you press play button, the signal is drawn dynamically.
 ![2022-11-21_232738](https://user-images.githubusercontent.com/87495750/203164547-f2a7c920-3b47-4c41-b85b-6ce362587853.jpg)    
@@ -58,7 +57,7 @@
 ### 9. Apply button
 #### When you press this button, the changes that you have made on the sliders will be applied on the signal.  
   
-### 9. Play Original Option 
+### 10. Play Original Option 
 #### When you choose this option, the original voice that you uploaded will play instead of the modified voice
 ![2022-11-21_232800](https://user-images.githubusercontent.com/87495750/203164965-c7dcabc1-e9df-4974-8371-baa0a6b9c7a8.jpg)  
 
