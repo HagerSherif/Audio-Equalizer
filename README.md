@@ -55,10 +55,10 @@
 ![2022-11-21_232613](https://user-images.githubusercontent.com/87495750/203170221-c9905344-0876-4403-aa55-9326157d15cb.jpg)    
 ![2022-11-21_232629](https://user-images.githubusercontent.com/87495750/203164881-b9ec2043-83e7-4f5f-b4c7-51f9efd68a34.jpg)  
   
-### 9. Apply button
+### 10. Apply button
 #### When you press this button, the changes that you have made on the sliders will be applied on the signal.  
   
-### 10. Play Original Option 
+### 11. Play Original Option 
 #### When you choose this option, the original voice that you uploaded will play instead of the modified voice
 ![2022-11-21_232800](https://user-images.githubusercontent.com/87495750/203164965-c7dcabc1-e9df-4974-8371-baa0a6b9c7a8.jpg)  
 
