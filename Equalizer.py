@@ -14,22 +14,8 @@ import altair as alt
 import mpld3
 
 
+# styling:
 st.set_page_config(page_title="Equalizer", page_icon=":headphones:",layout="wide")
-
-if 'uploadedFile' not in st.session_state:
-    st.session_state['uploadedFile']=None
-    st.session_state['modified_wav_file']=None  
-    st.session_state['radio_check']=0 
-    st.session_state['modified_data']=None 
-    st.session_state['fourierValues']=[]   
-    st.session_state['size']=0 
-    st.session_state['paused']=False 
-    st.session_state['play_original']=False 
-    st.session_state['change_sound_mode_bool']=False
-    
-
-    
-
           
 hide_st_style = """
             <style>
@@ -50,7 +36,44 @@ button_style = """
         """
 st.markdown(button_style, unsafe_allow_html=True)
 
-def plot_animation(df):
+
+
+
+if 'uploadedFile' not in st.session_state:
+    st.session_state['uploadedFile']=None
+    st.session_state['modified_wav_file']=None  
+    st.session_state['radio_check']=0 
+    st.session_state['modified_data']=None 
+    st.session_state['fourierValues']=[]   
+    st.session_state['play_original']=False 
+    st.session_state['current_check']=st.session_state['play_original']
+    st.session_state['start_time']=0 
+    st.session_state['change_sound_mode_bool']=False
+
+def stop_music():
+    if pygame.mixer.get_init() is not None:
+            pygame.mixer.quit()
+    st.session_state['start_time']=0  
+        
+        
+
+def pause_music():
+    if pygame.mixer.get_init() is not None:
+            pygame.mixer.music.pause() 
+               
+
+
+def play_music(wav_file,data):
+    if pygame.mixer.get_init() is not None:
+        pygame.mixer.music.unpause() 
+    else:   
+        pygame.mixer.init()
+        pygame.mixer.music.load(wav_file)
+        pygame.mixer.music.play()
+    play_plot(data)  
+    
+
+def plot(df):
     lines = alt.Chart(df).mark_trail().encode(
             x=alt.X("x_axis", axis=alt.Axis(title='Time'),scale=alt.Scale(domain=(0,st.session_state['time'][-1]))),
             y=alt.Y('y_axis', axis=alt.Axis(title='Magnitude')),
@@ -61,30 +84,36 @@ def plot_animation(df):
     return lines
 
 
-def static(file):
-   df =file.iloc[0:st.session_state['size']]
-   lines = plot_animation(df)
+def stop_plot(file):
+   df =file.iloc[0:st.session_state['start_time']]
+   lines = plot(df)
    st.altair_chart(lines) 
 
-def realtime(file):
+def play_plot(file):
     df =file
-    lines = plot_animation(df)
+    lines = plot(df)
     line_plot = st.altair_chart(lines)
-    N = df.shape[0]
-    if not st.session_state['paused']:      
-        st.session_state['size'] = 0    
-    for i in range(0, N):
+    total_time = df.shape[0]   
+    while (st.session_state['start_time']>=0 and st.session_state['start_time']<total_time  ):
+        if pause_btn:
+            break
+        elif apply_btn: 
+            stop_music()
+            apply_action()
+            break
 
-        step_df = df.iloc[0:st.session_state['size']]
-        lines = plot_animation(step_df)
+        elif st.session_state['current_check']!=st.session_state['play_original']: 
+          stop_music()
+          st.session_state['current_check']=st.session_state['play_original']
+          break
+
+        step_df = df.iloc[0:st.session_state['start_time']]
+        lines = plot(step_df)
         line_plot = line_plot.altair_chart(lines)
-        if st.session_state['size'] < N-1:
-            st.session_state['size'] =st.session_state['size'] + 1
-        else:
-            if pygame.mixer.get_init() is not None:
-                pygame.mixer.quit() 
-            st.session_state['paused']=False    
+        st.session_state['start_time'] += 1
         time.sleep(.001)
+    if (st.session_state['start_time']==total_time):    
+     stop_music()    
     st.experimental_rerun()   
 
 def fourier_transform(x,sampleRate):
@@ -116,10 +145,7 @@ def add_new_uploaded_file ():
         st.session_state['maxFrequency']=int (sampleRate/2)
         st.session_state['sampleRate']=sampleRate
         st.session_state['modified_wav_file']=None
-        st.session_state['paused']=False 
-        st.session_state['size'] = 0
-        if pygame.mixer.get_init() is not None:
-            pygame.mixer.quit() 
+
 
 def change_frequency(sliderKey,sliderValue):
     maxFrequency=st.session_state['maxFrequency'] 
@@ -132,7 +158,7 @@ def change_frequency(sliderKey,sliderValue):
     dataCopy=st.session_state['mainFourierValues'][frequencyRange[0]:frequencyRange[1]].copy()
     st.session_state.fourierValues[frequencyRange[0]:frequencyRange[1]]= dataCopy*(sliderValue)  
 
-def control_music(control):
+def control(control):
        if st.session_state['uploadedFile'] is not None:
         if (not st.session_state['play_original']) and (st.session_state['modified_wav_file'] is not None):
             wav_file=st.session_state['modified_wav_file']
@@ -142,19 +168,23 @@ def control_music(control):
             data=pd.DataFrame({'y_axis':st.session_state["dataArray"][::1800],'x_axis':st.session_state['time'][::1800]})
 
         if control== "play":
-            if pygame.mixer.get_init() is not None:
-              pygame.mixer.music.unpause() 
-            else:   
-                pygame.mixer.init()
-                pygame.mixer.music.load(wav_file)
-                pygame.mixer.music.play()
-            realtime(data)  
+            play_music(wav_file,data)
+
+        elif control== "pause":
+            pause_music()
+            stop_plot(data)
 
 
-        elif control== "Stop":
-                if pygame.mixer.get_init() is not None:
-                    pygame.mixer.music.pause()
-                static(data)
+        # elif control== "stop": 
+        #     stop_music()
+        #     stop_plot(data)
+
+        
+
+        
+
+
+
 
 
 def maleFemaleChange():
@@ -195,29 +225,15 @@ def make_sliders():
                     change_frequency(key,sliders[key])
                 st.caption(new_dict['names_of_sliders'][key-1])
 
-def play_buttons():
-        global Apply
-        col1,col2=st.sidebar.columns([1,1])
-        if col1.button("Play"):
-            control_music("play")  
-        else: 
-            control_music("Stop")
 
-        if col1.button("Stop"):
-            st.session_state['paused']=True    
-        
-        st.session_state['play_original']=col1.checkbox("Play Original",value=False)
-        Apply =col2.button("Apply")
+       
 
 def apply_action():
         if radio_check !='Male-Female':
             st.session_state['modified_data']=fourier.irfft(st.session_state['fourierValues'],n=st.session_state['FileLength'])
-        if pygame.mixer.get_init() is not None:
-            pygame.mixer.quit()
-        st.session_state['paused']=False  
         soundfile.write('tem1.wav', st.session_state['modified_data'],st.session_state['sampleRate'], subtype='PCM_16')
         st.session_state['modified_wav_file'] ='tem1.wav'
-
+        
 def spectrogram(data):
     fig =plt.figure(figsize=(8,3))
     plt.specgram(data, Fs=st.session_state.sampleRate,cmap='jet')
@@ -226,7 +242,7 @@ def spectrogram(data):
     return fig 
 
 
-def draw(data,title,):
+def original_modified_plots(data,title,):
         if spectroCheckBox:
             fig =spectrogram(data)
             plt.title(title, 
@@ -243,23 +259,42 @@ def draw(data,title,):
 
 
 def sound_mode():
-    play_buttons()
-    
+    global pause_btn
+    global apply_btn
+
+    col1,col2=st.sidebar.columns([1,1])    
+    st.session_state['play_original']=col1.checkbox("Play Original",value=False)
     leftUpColumns,rightUpColumns=st.columns(2)
     with leftUpColumns:
-        draw(st.session_state.dataArray,title='Original Signal')
-    
-    make_sliders()
-
-    if Apply: #sidebar
-        apply_action()
-
-    if st.session_state['play_original']: #sidebar
-        if pygame.mixer.get_init() is not None:
-            pygame.mixer.quit()
-        st.session_state['paused']=False    
+        original_modified_plots(st.session_state.dataArray,title='Original Signal')
     with rightUpColumns:
-        draw(st.session_state.modified_data,title='Modified Signal')
+        original_modified_plots(st.session_state.modified_data,title='Modified Signal')       
+    make_sliders()
+    pause_btn=col1.button("Pause")
+    play_btn=col1.button("Play")
+    apply_btn=col2.button("Apply")
+
+
+    if play_btn:
+        control("play")  
+    elif apply_btn:  
+        # stop_music()
+        apply_action()           
+    elif st.session_state['current_check']!=st.session_state['play_original']: 
+        #   stop_music()
+          st.session_state['current_check']=st.session_state['play_original']
+    else:
+        control('pause')
+    
+
+     
+
+   
+
+   
+
+
+
 
 def draw_medical_signal(data,title):
     time=st.session_state.time
